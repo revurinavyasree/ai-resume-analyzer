@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Upload Resume — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            <!-- HERO -->
+            <div class="text-center mb-4">
+                <div style="display:inline-flex;align-items:center;justify-content:center;
+                            width:64px;height:64px;border-radius:18px;
+                            background:rgba(79,110,247,0.12);font-size:28px;
+                            color:var(--primary);margin-bottom:16px;">
+                    <i class="bi bi-file-earmark-person-fill"></i>
+                </div>
+                <h2 style="font-size:1.8rem;">Analyze Your Resume</h2>
+                <p style="color:var(--muted);font-size:0.95rem;">
+                    ATS score, skill gaps, company match &amp; interview prep —
+                    built for freshers targeting TCS, Infosys, Wipro &amp; more.
+                </p>
+            </div>
+
+            <!-- UPLOAD CARD -->
+            <div class="card p-4 mb-4">
+                <form action="/upload" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight:600;">
+                            <i class="bi bi-file-earmark-arrow-up me-2 text-primary"></i>Upload Resume
+                        </label>
+                        <input type="file" name="resume" class="form-control" accept=".pdf,.docx" required>
+                        <small style="color:var(--muted);">PDF or DOCX only</small>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;">
+                            <i class="bi bi-briefcase me-2 text-primary"></i>Job Description
+                            <span style="color:var(--muted);font-weight:400;">(optional)</span>
+                        </label>
+                        <textarea name="job_description" class="form-control" rows="5"
+                            placeholder="Paste the job description here to get a JD match score..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2" style="font-size:1rem;">
+                        <i class="bi bi-cpu me-2"></i>Analyze Resume
+                    </button>
+                </form>
+            </div>
+
+            <!-- FEATURES ROW -->
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="card p-3 h-100">
+                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(79,110,247,0.1);
+                                    color:var(--primary);display:flex;align-items:center;justify-content:center;
+                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-graph-up-arrow"></i></div>
+                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">ATS Score</div>
+                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">Checks resume against ATS filters</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card p-3 h-100">
+                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(34,197,94,0.1);
+                                    color:var(--success);display:flex;align-items:center;justify-content:center;
+                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-building"></i></div>
+                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">Company Match</div>
+                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">TCS, Infosys, Wipro &amp; 8 more</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card p-3 h-100">
+                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(245,158,11,0.1);
+                                    color:var(--warning);display:flex;align-items:center;justify-content:center;
+                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-chat-quote"></i></div>
+                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">Interview Prep</div>
+                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">HR &amp; technical questions per company</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card p-3 h-100">
+                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(239,68,68,0.1);
+                                    color:var(--danger);display:flex;align-items:center;justify-content:center;
+                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-file-pdf"></i></div>
+                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">PDF Report</div>
+                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">Download full analysis report</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT UPLOADS -->
+            {% if resumes %}
+            <div class="card p-4">
+                <div class="card-header-custom">
+                    <div class="card-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h5 class="card-title-text">Recent Uploads</h5>
+                    <a href="/history" class="btn btn-sm btn-outline-primary ms-auto">View All</a>
+                </div>
+                {% for r in resumes[:3] %}
+                <div class="d-flex align-items-center gap-3 py-2" style="border-bottom:1px solid var(--border);">
+                    <i class="bi bi-file-earmark-text" style="color:var(--primary);font-size:20px;"></i>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:600;font-size:0.88rem;">{{ r.filename }}</div>
+                        <div style="color:var(--muted);font-size:0.75rem;">{{ r.uploaded_at }}</div>
+                    </div>
+                    <span class="badge rounded-pill {% if r.ats_score >= 70 %}bg-success{% elif r.ats_score >= 40 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                        {{ r.ats_score }}%
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

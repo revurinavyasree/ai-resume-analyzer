@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Resume Analyzer{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg:        #f4f6fb;
+            --surface:   #ffffff;
+            --border:    #e4e8f0;
+            --text:      #1a1d2e;
+            --muted:     #6b7280;
+            --primary:   #4f6ef7;
+            --primary2:  #3b57e0;
+            --success:   #22c55e;
+            --warning:   #f59e0b;
+            --danger:    #ef4444;
+            --info:      #06b6d4;
+            --card-shadow: 0 2px 16px rgba(79,110,247,0.07);
+        }
+        [data-theme="dark"] {
+            --bg:        #0f1117;
+            --surface:   #1a1d2e;
+            --border:    #2a2d3e;
+            --text:      #e8eaf6;
+            --muted:     #9094a8;
+            --card-shadow: 0 2px 16px rgba(0,0,0,0.4);
+        }
+
+        * { transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        h1,h2,h3,h4,h5 { font-family: 'Syne', sans-serif; font-weight: 700; }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--surface) !important;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            box-shadow: 0 2px 12px rgba(79,110,247,0.06);
+        }
+        .navbar-brand {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--primary) !important;
+            letter-spacing: -0.3px;
+        }
+        .navbar-brand span { color: var(--text); }
+        .nav-link {
+            color: var(--muted) !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 6px 14px !important;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary) !important;
+            background: rgba(79,110,247,0.08);
+        }
+        .nav-link i { margin-right: 5px; }
+
+        /* DARK MODE TOGGLE */
+        .theme-toggle {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* USER BADGE */
+        .user-badge {
+            background: rgba(79,110,247,0.1);
+            color: var(--primary);
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+        .card-header-custom {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 18px;
+        }
+        .card-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .card-title-text { font-size: 1rem; font-weight: 700; margin: 0; }
+
+        /* PROGRESS BARS */
+        .progress {
+            height: 10px;
+            border-radius: 99px;
+            background: var(--border);
+        }
+        .progress-bar { border-radius: 99px; }
+
+        /* BADGES */
+        .skill-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin: 3px;
+            background: rgba(79,110,247,0.1);
+            color: var(--primary);
+            border: 1px solid rgba(79,110,247,0.2);
+        }
+
+        /* SCORE CIRCLE */
+        .score-circle {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            border: 4px solid;
+            flex-shrink: 0;
+        }
+        .score-circle small { font-size: 0.6rem; font-weight: 500; margin-top: -4px; }
+
+        /* FLASH MESSAGES */
+        .alert { border-radius: 12px; border: none; font-size: 0.9rem; }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .btn-primary:hover { background: var(--primary2); border-color: var(--primary2); }
+        .btn-outline-primary { border-color: var(--primary); color: var(--primary); border-radius: 10px; font-weight: 600; }
+        .btn-outline-primary:hover { background: var(--primary); border-color: var(--primary); }
+
+        /* TABLE */
+        .table { color: var(--text); }
+        .table thead th {
+            background: rgba(79,110,247,0.06);
+            color: var(--primary);
+            font-family: 'Syne', sans-serif;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 12px 16px;
+        }
+        .table tbody td { padding: 12px 16px; border-color: var(--border); vertical-align: middle; }
+        .table tbody tr:hover { background: rgba(79,110,247,0.03); }
+
+        /* FORM CONTROLS */
+        .form-control, .form-select {
+            background: var(--bg);
+            border-color: var(--border);
+            color: var(--text);
+            border-radius: 10px;
+        }
+        .form-control:focus {
+            background: var(--bg);
+            color: var(--text);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+        }
+        .input-group-text {
+            background: var(--border);
+            border-color: var(--border);
+            color: var(--muted);
+            border-radius: 10px 0 0 10px;
+        }
+
+        /* PRE */
+        pre {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text);
+            font-size: 0.82rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-file-earmark-person-fill me-2"></i>Resume<span>AI</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navMenu">
+            {% if session.user_id %}
+            <ul class="navbar-nav me-auto gap-1">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                        <i class="bi bi-upload"></i>Upload Resume
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/history' %}active{% endif %}" href="/history">
+                        <i class="bi bi-clock-history"></i>My History
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center gap-3">
+                <span class="user-badge">
+                    <i class="bi bi-person-circle me-1"></i>{{ session.user_name }}
+                </span>
+                <a href="/logout" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="ms-3">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- FLASH MESSAGES -->
+<div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<!-- FOOTER -->
+<div class="footer">
+    <i class="bi bi-file-earmark-person me-1"></i>
+    ResumeAI — Built for freshers targeting service-based companies
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Dark mode
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute("data-theme") === "dark";
+        html.setAttribute("data-theme", isDark ? "light" : "dark");
+        document.getElementById("theme-icon").className = isDark
+            ? "bi bi-moon-stars-fill"
+            : "bi bi-sun-fill";
+        localStorage.setItem("theme", isDark ? "light" : "dark");
+    }
+    // Restore saved theme
+    const saved = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-theme", saved);
+    document.getElementById("theme-icon").className =
+        saved === "dark" ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

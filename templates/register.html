@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Register — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="container">
+<div style="max-width:420px;margin:60px auto;">
+
+    <!-- HEADER -->
+    <div class="text-center mb-4">
+        <div style="display:inline-flex;align-items:center;justify-content:center;
+                    width:64px;height:64px;border-radius:18px;
+                    background:rgba(79,110,247,0.12);font-size:28px;
+                    color:var(--primary);margin-bottom:16px;">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <h3>Create Account</h3>
+        <p style="color:var(--muted);font-size:0.9rem;">Join ResumeAI and start analyzing</p>
+    </div>
+
+    <!-- FLASK FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-circle me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- CARD -->
+    <div class="card p-4">
+        <form id="registerForm" method="POST" action="/register" novalidate>
+
+            <!-- FULL NAME -->
+            <div class="mb-3">
+                <label class="form-label" style="font-weight:600;font-size:0.88rem;">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input
+                        type="text"
+                        name="name"
+                        id="regName"
+                        class="form-control"
+                        placeholder="Your full name"
+                        autocomplete="name"
+                    >
+                </div>
+                <div id="nameError" style="display:none;color:#ef4444;font-size:0.8rem;margin-top:5px;">
+                    <i class="bi bi-x-circle me-1"></i><span id="nameErrorText"></span>
+                </div>
+            </div>
+
+            <!-- EMAIL -->
+            <div class="mb-3">
+                <label class="form-label" style="font-weight:600;font-size:0.88rem;">Email address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input
+                        type="email"
+                        name="email"
+                        id="regEmail"
+                        class="form-control"
+                        placeholder="you@gmail.com"
+                        autocomplete="email"
+                    >
+                </div>
+                <div id="regEmailError" style="display:none;color:#ef4444;font-size:0.8rem;margin-top:5px;">
+                    <i class="bi bi-x-circle me-1"></i><span id="regEmailErrorText"></span>
+                </div>
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="mb-2">
+                <label class="form-label" style="font-weight:600;font-size:0.88rem;">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input
+                        type="password"
+                        name="password"
+                        id="regPassword"
+                        class="form-control"
+                        placeholder="Min 6 characters"
+                        autocomplete="new-password"
+                        style="border-right:none;"
+                    >
+                    <button
+                        type="button"
+                        onclick="togglePwd('regPassword','toggleRegIcon')"
+                        style="border:1px solid var(--border);border-left:none;
+                               background:var(--bg);color:var(--muted);
+                               padding:0 14px;border-radius:0 10px 10px 0;cursor:pointer;">
+                        <i class="bi bi-eye" id="toggleRegIcon"></i>
+                    </button>
+                </div>
+                <div id="regPasswordError" style="display:none;color:#ef4444;font-size:0.8rem;margin-top:5px;">
+                    <i class="bi bi-x-circle me-1"></i><span id="regPasswordErrorText"></span>
+                </div>
+            </div>
+
+            <!-- PASSWORD STRENGTH BAR — only red and green -->
+            <div class="mb-4">
+                <div style="height:5px;border-radius:99px;background:var(--border);margin-top:8px;">
+                    <div id="strengthBar"
+                         style="height:5px;border-radius:99px;width:0%;
+                                transition:width 0.3s,background 0.3s;">
+                    </div>
+                </div>
+                <small id="strengthText" style="font-size:0.75rem;margin-top:4px;display:block;"></small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="bi bi-person-check me-2"></i>Create Account
+            </button>
+
+        </form>
+
+        <div class="text-center mt-3" style="font-size:0.88rem;color:var(--muted);">
+            Already have an account?
+            <a href="/login" style="color:var(--primary);font-weight:600;">Login here</a>
+        </div>
+    </div>
+
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+// ── Password show/hide toggle ─────────────────────────────────────
+function togglePwd(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+//Email format check 
+function isValidEmail(email) {
+    email = email.trim();
+
+    // Basic format check
+    const regex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}$/;
+    if (!regex.test(email)) return false;
+
+    // Split and check parts
+    const parts  = email.split('@');
+    const user   = parts[0];
+    const domain = parts[1];
+
+    // User part must be at least 2 chars
+    if (user.length < 2) return false;
+
+    // Domain must have a dot
+    const domainParts = domain.split('.');
+    if (domainParts.length < 2) return false;
+
+    // Domain name before dot must be at least 2 chars (rejects x@y.com)
+    if (domainParts[0].length < 2) return false;
+
+    // Extension must be 2-4 chars (.com .in .org)
+    const ext = domainParts[domainParts.length - 1];
+    if (ext.length < 2 || ext.length > 4) return false;
+
+    return true;
+}
+// Show / hide error helpers 
+function showError(divId, textId, msg) {
+    document.getElementById(divId).style.display = 'block';
+    document.getElementById(textId).textContent  = msg;
+}
+function hideError(divId) {
+    document.getElementById(divId).style.display = 'none';
+}
+function setInvalid(id) {
+    document.getElementById(id).style.borderColor = '#ef4444';
+}
+function setValid(id) {
+    document.getElementById(id).style.borderColor = '#22c55e';
+}
+
+//Password strength — RED (weak) or GREEN (strong) only
+function checkStrength(pwd) {
+    const bar  = document.getElementById('strengthBar');
+    const text = document.getElementById('strengthText');
+
+    if (pwd.length === 0) {
+        bar.style.width  = '0%';
+        text.textContent = '';
+        return;
+    }
+
+    let score = 0;
+    if (pwd.length >= 4)           score++;  
+    if (pwd.length >= 8)           score++;  
+    if (/[A-Z]/.test(pwd))         score++;  // has uppercase
+    if (/[0-9]/.test(pwd))         score++;  // has number
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;  // has special char
+
+    score = Math.max(1, Math.min(score, 5));
+
+    // Only RED (1-3) or GREEN (4-5)
+    const levels = [
+        { w:'20%',  c:'#ef4444', t:'Very weak'  },
+        { w:'40%',  c:'#ef4444', t:'Weak'       },
+        { w:'60%',  c:'#ef4444', t:'Fair'       },
+        { w:'80%',  c:'#22c55e', t:'Good'       },
+        { w:'100%', c:'#22c55e', t:'Strong'     },
+    ];
+
+    const l = levels[score - 1];
+    bar.style.width      = l.w;
+    bar.style.background = l.c;
+    text.style.color     = l.c;
+    text.textContent     = l.t;
+}
+
+//Live validation while typing 
+document.getElementById('regName').addEventListener('input', function () {
+    if (this.value.trim() === '') {
+        showError('nameError', 'nameErrorText', 'Full name is required');
+        setInvalid('regName');
+    } else {
+        hideError('nameError');
+        setValid('regName');
+    }
+});
+
+document.getElementById('regEmail').addEventListener('input', function () {
+    const val = this.value.trim();
+    if (val === '') {
+        hideError('regEmailError');
+        this.style.borderColor = 'var(--border)';
+    } else if (!isValidEmail(val)) {
+        showError('regEmailError', 'regEmailErrorText', 'Enter a valid email (e.g. abc@gmail.com)');
+        setInvalid('regEmail');
+    } else {
+        hideError('regEmailError');
+        setValid('regEmail');
+    }
+});
+
+document.getElementById('regPassword').addEventListener('input', function () {
+    checkStrength(this.value);
+    if (this.value === '') {
+        showError('regPasswordError', 'regPasswordErrorText', 'Password cannot be empty');
+        setInvalid('regPassword');
+    } else if (this.value.length < 6) {
+        showError('regPasswordError', 'regPasswordErrorText', 'Password must be at least 6 characters');
+        setInvalid('regPassword');
+    } else {
+        hideError('regPasswordError');
+        setValid('regPassword');
+    }
+});
+
+//Final check on form submit 
+document.getElementById('registerForm').addEventListener('submit', function (e) {
+    let valid = true;
+
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+
+    if (name === '') {
+        showError('nameError', 'nameErrorText', 'Full name is required');
+        setInvalid('regName');
+        valid = false;
+    }
+    if (email === '') {
+        showError('regEmailError', 'regEmailErrorText', 'Email address is required');
+        setInvalid('regEmail');
+        valid = false;
+    } else if (!isValidEmail(email)) {
+        showError('regEmailError', 'regEmailErrorText', 'Enter a valid email (e.g. abc@gmail.com)');
+        setInvalid('regEmail');
+        valid = false;
+    }
+    if (password === '') {
+        showError('regPasswordError', 'regPasswordErrorText', 'Password cannot be empty');
+        setInvalid('regPassword');
+        valid = false;
+    } else if (password.length < 6) {
+        showError('regPasswordError', 'regPasswordErrorText', 'Password must be at least 6 characters');
+        setInvalid('regPassword');
+        valid = false;
+    }
+
+    if (!valid) e.preventDefault();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Login — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="container">
+<div style="max-width:420px;margin:60px auto;">
+
+    <!-- HEADER -->
+    <div class="text-center mb-4">
+        <div style="display:inline-flex;align-items:center;justify-content:center;
+                    width:64px;height:64px;border-radius:18px;
+                    background:rgba(79,110,247,0.12);font-size:28px;
+                    color:var(--primary);margin-bottom:16px;">
+            <i class="bi bi-person-circle"></i>
+        </div>
+        <h3>Welcome back</h3>
+        <p style="color:var(--muted);font-size:0.9rem;">Login to your ResumeAI account</p>
+    </div>
+
+    <!-- FLASK FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-circle me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- CARD -->
+    <div class="card p-4">
+        <form id="loginForm" method="POST" action="/login" novalidate>
+
+            <!-- EMAIL -->
+            <div class="mb-3">
+                <label class="form-label" style="font-weight:600;font-size:0.88rem;">
+                    Email address
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input
+                        type="email"
+                        name="email"
+                        id="loginEmail"
+                        class="form-control"
+                        placeholder="you@gmail.com"
+                        autocomplete="email"
+                    >
+                </div>
+                <!-- Error message -->
+                <div id="emailError" style="display:none;color:var(--danger);font-size:0.8rem;margin-top:5px;">
+                    <i class="bi bi-x-circle me-1"></i><span id="emailErrorText"></span>
+                </div>
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="mb-4">
+                <label class="form-label" style="font-weight:600;font-size:0.88rem;">
+                    Password
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input
+                        type="password"
+                        name="password"
+                        id="loginPassword"
+                        class="form-control"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        style="border-right:none;"
+                    >
+                    <!-- Eye toggle button -->
+                    <button
+                        type="button"
+                        id="toggleLogin"
+                        onclick="togglePwd('loginPassword','toggleLoginIcon')"
+                        style="border:1px solid var(--border);border-left:none;
+                               background:var(--bg);color:var(--muted);
+                               padding:0 14px;border-radius:0 10px 10px 0;cursor:pointer;">
+                        <i class="bi bi-eye" id="toggleLoginIcon"></i>
+                    </button>
+                </div>
+                <!-- Error message -->
+                <div id="passwordError" style="display:none;color:var(--danger);font-size:0.8rem;margin-top:5px;">
+                    <i class="bi bi-x-circle me-1"></i><span id="passwordErrorText"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2" id="loginBtn">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            </button>
+
+        </form>
+
+        <div class="text-center mt-3" style="font-size:0.88rem;color:var(--muted);">
+            Don't have an account?
+            <a href="/register" style="color:var(--primary);font-weight:600;">Register here</a>
+        </div>
+    </div>
+
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+//Password toggle 
+function togglePwd(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+//Email validation 
+function isValidEmail(email) {
+    email = email.trim();
+
+    // Basic format check
+    const regex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}$/;
+    if (!regex.test(email)) return false;
+
+    // Split and check parts
+    const parts  = email.split('@');
+    const user   = parts[0];
+    const domain = parts[1];
+
+    // User part must be at least 2 chars
+    if (user.length < 2) return false;
+
+    // Domain must have a dot
+    const domainParts = domain.split('.');
+    if (domainParts.length < 2) return false;
+
+    // Domain name before dot must be at least 2 chars (rejects x@y.com)
+    if (domainParts[0].length < 2) return false;
+
+    // Extension must be 2-4 chars (.com .in .org)
+    const ext = domainParts[domainParts.length - 1];
+    if (ext.length < 2 || ext.length > 4) return false;
+
+    return true;
+}
+
+function showError(errorDivId, textId, message) {
+    document.getElementById(errorDivId).style.display = 'block';
+    document.getElementById(textId).textContent = message;
+}
+
+function hideError(errorDivId) {
+    document.getElementById(errorDivId).style.display = 'none';
+}
+
+function setInvalid(inputId) {
+    document.getElementById(inputId).style.borderColor = 'var(--danger)';
+}
+
+function setValid(inputId) {
+    document.getElementById(inputId).style.borderColor = 'var(--success)';
+}
+
+// Live email validation while typing
+document.getElementById('loginEmail').addEventListener('input', function () {
+    const val = this.value.trim();
+    if (val === '') {
+        hideError('emailError');
+        this.style.borderColor = 'var(--border)';
+    } else if (!isValidEmail(val)) {
+        showError('emailError', 'emailErrorText', 'Please enter a valid email (e.g. abc@gmail.com)');
+        setInvalid('loginEmail');
+    } else {
+        hideError('emailError');
+        setValid('loginEmail');
+    }
+});
+
+// Live password validation
+document.getElementById('loginPassword').addEventListener('input', function () {
+    if (this.value === '') {
+        showError('passwordError', 'passwordErrorText', 'Password cannot be empty');
+        setInvalid('loginPassword');
+    } else {
+        hideError('passwordError');
+        setValid('loginPassword');
+    }
+});
+
+// Form submit validation
+document.getElementById('loginForm').addEventListener('submit', function (e) {
+    let valid = true;
+
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    // Email check
+    if (email === '') {
+        showError('emailError', 'emailErrorText', 'Email address is required');
+        setInvalid('loginEmail');
+        valid = false;
+    } else if (!isValidEmail(email)) {
+        showError('emailError', 'emailErrorText', 'Please enter a valid email (e.g. abc@gmail.com)');
+        setInvalid('loginEmail');
+        valid = false;
+    }
+
+    // Password check
+    if (password === '') {
+        showError('passwordError', 'passwordErrorText', 'Password cannot be empty');
+        setInvalid('loginPassword');
+        valid = false;
+    }
+
+    if (!valid) {
+        e.preventDefault(); // Stop form submission
+    }
+});
+</script>
+{% endblock %}
