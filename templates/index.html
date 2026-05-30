@@ -2,115 +2,283 @@
 {% block title %}Upload Resume — ResumeAI{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-7">
+<div class="container mt-4 mb-5">
+<div class="row justify-content-center">
+<div class="col-lg-8">
 
-            <!-- HERO -->
-            <div class="text-center mb-4">
-                <div style="display:inline-flex;align-items:center;justify-content:center;
-                            width:64px;height:64px;border-radius:18px;
-                            background:rgba(79,110,247,0.12);font-size:28px;
-                            color:var(--primary);margin-bottom:16px;">
-                    <i class="bi bi-file-earmark-person-fill"></i>
+    <!-- WELCOME HEADER -->
+    <div class="d-flex align-items-center gap-3 mb-4 p-3"
+         style="background:linear-gradient(135deg,rgba(79,110,247,0.1),rgba(6,182,212,0.05));
+                border:1px solid rgba(79,110,247,0.15);border-radius:16px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(79,110,247,0.15);
+                    color:var(--primary);display:flex;align-items:center;justify-content:center;
+                    font-size:22px;flex-shrink:0;">
+            <i class="bi bi-person-circle"></i>
+        </div>
+        <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;">
+                Welcome back, {{ session.user_name }}! 👋
+            </div>
+            <div style="color:var(--muted);font-size:0.83rem;">
+                Upload your resume to get your full analysis
+            </div>
+        </div>
+        <a href="/history" class="btn btn-sm btn-outline-primary ms-auto">
+            <i class="bi bi-clock-history me-1"></i>History
+        </a>
+    </div>
+
+    <!-- MAIN UPLOAD CARD -->
+    <div class="card p-4 mb-4">
+        <form action="/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+
+            <!-- DRAG & DROP UPLOAD AREA -->
+            <div class="mb-4">
+                <label class="form-label" style="font-weight:700;font-size:0.95rem;">
+                    <i class="bi bi-file-earmark-arrow-up me-2" style="color:var(--primary);"></i>
+                    Upload Your Resume
+                </label>
+
+                <div id="dropZone"
+                     onclick="document.getElementById('resumeFile').click()"
+                     style="border:2px dashed var(--border);border-radius:14px;
+                            padding:40px 20px;text-align:center;cursor:pointer;
+                            transition:all 0.2s;background:var(--bg);">
+                    <div id="dropContent">
+                        <div style="width:56px;height:56px;border-radius:16px;
+                                    background:rgba(79,110,247,0.1);color:var(--primary);
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:24px;margin:0 auto 14px;">
+                            <i class="bi bi-cloud-upload"></i>
+                        </div>
+                        <div style="font-weight:700;font-size:0.95rem;margin-bottom:6px;">
+                            Click to upload or drag & drop
+                        </div>
+                        <div style="color:var(--muted);font-size:0.82rem;">
+                            PDF or DOCX &nbsp;·&nbsp; Max 10MB
+                        </div>
+                    </div>
+                    <!-- File selected state -->
+                    <div id="fileSelected" style="display:none;">
+                        <div style="width:56px;height:56px;border-radius:16px;
+                                    background:rgba(34,197,94,0.1);color:var(--success);
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:24px;margin:0 auto 14px;">
+                            <i class="bi bi-file-earmark-check"></i>
+                        </div>
+                        <div id="fileName" style="font-weight:700;font-size:0.95rem;
+                                                   color:var(--success);margin-bottom:6px;"></div>
+                        <div style="color:var(--muted);font-size:0.82rem;">
+                            Click to change file
+                        </div>
+                    </div>
                 </div>
-                <h2 style="font-size:1.8rem;">Analyze Your Resume</h2>
-                <p style="color:var(--muted);font-size:0.95rem;">
-                    ATS score, skill gaps, company match &amp; interview prep —
-                    built for freshers targeting TCS, Infosys, Wipro &amp; more.
-                </p>
+
+                <!-- Hidden actual file input -->
+                <input type="file" name="resume" id="resumeFile"
+                       accept=".pdf,.docx" style="display:none;" required>
             </div>
 
-            <!-- UPLOAD CARD -->
-            <div class="card p-4 mb-4">
-                <form action="/upload" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label class="form-label" style="font-weight:600;">
-                            <i class="bi bi-file-earmark-arrow-up me-2 text-primary"></i>Upload Resume
-                        </label>
-                        <input type="file" name="resume" class="form-control" accept=".pdf,.docx" required>
-                        <small style="color:var(--muted);">PDF or DOCX only</small>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label" style="font-weight:600;">
-                            <i class="bi bi-briefcase me-2 text-primary"></i>Job Description
-                            <span style="color:var(--muted);font-weight:400;">(optional)</span>
-                        </label>
-                        <textarea name="job_description" class="form-control" rows="5"
-                            placeholder="Paste the job description here to get a JD match score..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2" style="font-size:1rem;">
-                        <i class="bi bi-cpu me-2"></i>Analyze Resume
-                    </button>
-                </form>
-            </div>
-
-            <!-- FEATURES ROW -->
-            <div class="row g-3 mb-4">
-                <div class="col-6">
-                    <div class="card p-3 h-100">
-                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(79,110,247,0.1);
-                                    color:var(--primary);display:flex;align-items:center;justify-content:center;
-                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-graph-up-arrow"></i></div>
-                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">ATS Score</div>
-                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">Checks resume against ATS filters</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card p-3 h-100">
-                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(34,197,94,0.1);
-                                    color:var(--success);display:flex;align-items:center;justify-content:center;
-                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-building"></i></div>
-                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">Company Match</div>
-                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">TCS, Infosys, Wipro &amp; 8 more</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card p-3 h-100">
-                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(245,158,11,0.1);
-                                    color:var(--warning);display:flex;align-items:center;justify-content:center;
-                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-chat-quote"></i></div>
-                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">Interview Prep</div>
-                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">HR &amp; technical questions per company</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card p-3 h-100">
-                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(239,68,68,0.1);
-                                    color:var(--danger);display:flex;align-items:center;justify-content:center;
-                                    font-size:16px;margin-bottom:10px;"><i class="bi bi-file-pdf"></i></div>
-                        <div style="font-weight:700;font-size:0.88rem;font-family:'Syne',sans-serif;">PDF Report</div>
-                        <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">Download full analysis report</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RECENT UPLOADS -->
-            {% if resumes %}
-            <div class="card p-4">
-                <div class="card-header-custom">
-                    <div class="card-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <h5 class="card-title-text">Recent Uploads</h5>
-                    <a href="/history" class="btn btn-sm btn-outline-primary ms-auto">View All</a>
-                </div>
-                {% for r in resumes[:3] %}
-                <div class="d-flex align-items-center gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                    <i class="bi bi-file-earmark-text" style="color:var(--primary);font-size:20px;"></i>
-                    <div class="flex-grow-1">
-                        <div style="font-weight:600;font-size:0.88rem;">{{ r.filename }}</div>
-                        <div style="color:var(--muted);font-size:0.75rem;">{{ r.uploaded_at }}</div>
-                    </div>
-                    <span class="badge rounded-pill {% if r.ats_score >= 70 %}bg-success{% elif r.ats_score >= 40 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-                        {{ r.ats_score }}%
+            <!-- PREFERRED COMPANY -->
+            <div class="mb-4">
+                <label class="form-label" style="font-weight:700;font-size:0.95rem;">
+                    <i class="bi bi-building me-2" style="color:var(--primary);"></i>
+                    Preferred Company
+                    <span style="color:var(--muted);font-weight:400;font-size:0.82rem;">
+                        — optional, for targeted interview questions
                     </span>
-                </div>
-                {% endfor %}
+                </label>
+                <select name="preferred_company" class="form-select">
+                    <option value="">— Select a company —</option>
+                    <optgroup label="🇮🇳 Indian IT">
+                        <option value="TCS">TCS</option>
+                        <option value="Infosys">Infosys</option>
+                        <option value="Wipro">Wipro</option>
+                        <option value="HCL Technologies">HCL Technologies</option>
+                        <option value="Tech Mahindra">Tech Mahindra</option>
+                    </optgroup>
+                    <optgroup label="🌐 Global Service">
+                        <option value="Accenture">Accenture</option>
+                        <option value="Cognizant">Cognizant</option>
+                        <option value="Capgemini">Capgemini</option>
+                    </optgroup>
+                    <optgroup label="💼 Consulting">
+                        <option value="IBM">IBM</option>
+                        <option value="Deloitte">Deloitte</option>
+                        <option value="EY (Ernst and Young)">EY (Ernst and Young)</option>
+                    </optgroup>
+                </select>
             </div>
-            {% endif %}
 
+            <!-- JD MATCH -->
+            <div class="mb-4">
+                <label class="form-label" style="font-weight:700;font-size:0.95rem;">
+                    <i class="bi bi-briefcase me-2" style="color:var(--primary);"></i>
+                    Job Description
+                    <span style="color:var(--muted);font-weight:400;font-size:0.82rem;">
+                        — optional, for JD match score
+                    </span>
+                </label>
+                <textarea name="job_description" class="form-control" rows="5"
+                    placeholder="Paste the job description here...&#10;&#10;Example: We are looking for a Python developer with experience in Flask, SQL and REST APIs..."></textarea>
+            </div>
+
+            <!-- SUBMIT -->
+            <button type="submit" class="btn btn-primary w-100 py-3" id="analyzeBtn"
+                    style="font-size:1rem;font-weight:700;border-radius:12px;
+                           box-shadow:0 4px 20px rgba(79,110,247,0.3);">
+                <i class="bi bi-cpu me-2"></i>Analyze Resume
+            </button>
+
+            <!-- Loading state -->
+            <div id="loadingState" style="display:none;text-align:center;margin-top:20px;">
+                <div class="spinner-border text-primary" role="status" style="width:32px;height:32px;"></div>
+                <div style="color:var(--muted);font-size:0.88rem;margin-top:10px;">
+                    Analyzing your resume... This may take a few seconds
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- WHAT YOU WILL GET -->
+    <div style="margin-bottom:16px;">
+        <div style="color:var(--muted);font-size:0.8rem;font-weight:600;
+                    letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">
+            What you'll get
+        </div>
+        <div class="row g-2">
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center h-100">
+                    <i class="bi bi-graph-up-arrow mb-2" style="font-size:22px;color:var(--primary);"></i>
+                    <div style="font-size:0.8rem;font-weight:700;">ATS Score</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center h-100">
+                    <i class="bi bi-building mb-2" style="font-size:22px;color:var(--success);"></i>
+                    <div style="font-size:0.8rem;font-weight:700;">Company Match</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center h-100">
+                    <i class="bi bi-chat-dots mb-2" style="font-size:22px;color:var(--warning);"></i>
+                    <div style="font-size:0.8rem;font-weight:700;">Interview Prep</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center h-100">
+                    <i class="bi bi-file-pdf mb-2" style="font-size:22px;color:var(--danger);"></i>
+                    <div style="font-size:0.8rem;font-weight:700;">PDF Report</div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- RECENT UPLOADS -->
+    {% if resumes %}
+    <div class="card p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;">
+                <i class="bi bi-clock-history me-2" style="color:var(--primary);"></i>
+                Recent Uploads
+            </div>
+            <a href="/history" class="btn btn-sm btn-outline-primary">View All</a>
+        </div>
+        {% for r in resumes[:3] %}
+        <div class="d-flex align-items-center gap-3 py-2"
+             style="border-bottom:1px solid var(--border);">
+            <div style="width:36px;height:36px;border-radius:10px;
+                        background:rgba(79,110,247,0.1);color:var(--primary);
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:16px;flex-shrink:0;">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="flex-grow-1" style="min-width:0;">
+                <div style="font-weight:600;font-size:0.88rem;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ r.filename }}
+                </div>
+                <div style="color:var(--muted);font-size:0.75rem;">{{ r.uploaded_at }}</div>
+            </div>
+            <span class="badge rounded-pill
+                {% if r.ats_score >= 70 %}bg-success
+                {% elif r.ats_score >= 40 %}bg-warning text-dark
+                {% else %}bg-danger{% endif %}"
+                style="font-size:0.78rem;padding:5px 10px;flex-shrink:0;">
+                {{ r.ats_score }}%
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
 </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('resumeFile');
+const dropContent  = document.getElementById('dropContent');
+const fileSelected = document.getElementById('fileSelected');
+const fileNameEl   = document.getElementById('fileName');
+const uploadForm   = document.getElementById('uploadForm');
+const analyzeBtn   = document.getElementById('analyzeBtn');
+const loadingState = document.getElementById('loadingState');
+
+// File selected via click
+fileInput.addEventListener('change', function () {
+    if (this.files.length > 0) {
+        showFile(this.files[0].name);
+    }
+});
+
+function showFile(name) {
+    dropContent.style.display  = 'none';
+    fileSelected.style.display = 'block';
+    fileNameEl.textContent     = name;
+    dropZone.style.borderColor = 'var(--success)';
+    dropZone.style.background  = 'rgba(34,197,94,0.03)';
+}
+
+// Drag and drop
+dropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--primary)';
+    this.style.background  = 'rgba(79,110,247,0.05)';
+});
+
+dropZone.addEventListener('dragleave', function () {
+    this.style.borderColor = 'var(--border)';
+    this.style.background  = 'var(--bg)';
+});
+
+dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        // Validate file type
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['pdf','docx'].includes(ext)) {
+            alert('Only PDF and DOCX files are allowed.');
+            return;
+        }
+        // Assign to file input
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        showFile(file.name);
+    }
+});
+
+// Show loading on submit
+uploadForm.addEventListener('submit', function () {
+    if (fileInput.files.length === 0) return;
+    analyzeBtn.style.display   = 'none';
+    loadingState.style.display = 'block';
+});
+</script>
 {% endblock %}

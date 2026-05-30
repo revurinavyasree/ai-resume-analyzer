@@ -1,19 +1,140 @@
 {% extends "base.html" %}
 {% block title %}Analysis Result — ResumeAI{% endblock %}
 
+{% block head %}
+<style>
+    body { background: var(--bg) !important; }
+
+    .skill-chip {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 5px 14px; border-radius: 99px;
+        font-size: 0.78rem; font-weight: 600; margin: 3px;
+        background: rgba(79,110,247,0.1); color: var(--primary);
+        border: 1px solid rgba(79,110,247,0.2);
+        text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .section-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 16px; padding: 24px; margin-bottom: 16px;
+    }
+    .section-head {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    }
+    .section-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px; flex-shrink: 0;
+    }
+    .section-title {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700; font-size: 0.95rem; margin: 0;
+    }
+    .score-ring {
+        width: 84px; height: 84px; border-radius: 50%; border: 5px solid;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .score-ring .num {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800; font-size: 1.4rem; line-height: 1;
+    }
+    .score-ring .lbl { font-size: 0.58rem; font-weight: 500; opacity: 0.7; margin-top: 1px; }
+    .sw-item {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 10px 14px; border-radius: 10px;
+        margin-bottom: 8px; font-size: 0.87rem; line-height: 1.5;
+    }
+    .rec-item {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 12px 14px; border-radius: 10px;
+        background: var(--bg); border: 1px solid var(--border);
+        margin-bottom: 8px; font-size: 0.87rem; line-height: 1.5;
+    }
+    .company-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .company-row:last-child { border-bottom: none; }
+    .accordion-button {
+        background: var(--surface) !important; color: var(--text) !important;
+        font-weight: 700; font-size: 0.88rem;
+        border-radius: 10px !important; box-shadow: none !important;
+    }
+    .accordion-item {
+        background: var(--surface); border: 1px solid var(--border) !important;
+        border-radius: 10px !important; margin-bottom: 8px; overflow: hidden;
+    }
+    .accordion-body { background: var(--surface); color: var(--text); }
+
+    /* Resume preview */
+    .resume-preview {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+    }
+    .resume-name {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.4rem; font-weight: 800;
+        margin-bottom: 6px;
+    }
+    .resume-contact {
+        display: flex; flex-wrap: wrap; gap: 12px;
+        margin-bottom: 20px;
+    }
+    .resume-contact a, .resume-contact span {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 0.82rem; color: var(--muted);
+        text-decoration: none;
+    }
+    .resume-contact a:hover { color: var(--primary); }
+    .resume-section-title {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700; font-size: 0.82rem;
+        text-transform: uppercase; letter-spacing: 1.5px;
+        color: var(--primary);
+        border-bottom: 2px solid rgba(79,110,247,0.2);
+        padding-bottom: 6px;
+        margin: 18px 0 10px;
+    }
+    .resume-item {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: var(--text);
+        padding: 4px 0;
+        border-left: 3px solid rgba(79,110,247,0.2);
+        padding-left: 10px;
+        margin-bottom: 6px;
+    }
+    .resume-skill-tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 2px;
+        background: rgba(79,110,247,0.08);
+        color: var(--primary);
+        border: 1px solid rgba(79,110,247,0.15);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4 mb-5">
 
     <!-- PAGE HEADER -->
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <div style="width:48px;height:48px;border-radius:14px;background:rgba(79,110,247,0.12);
-                    color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;">
+    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <div style="width:48px;height:48px;border-radius:14px;
+                    background:rgba(79,110,247,0.12);color:var(--primary);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:22px;flex-shrink:0;">
             <i class="bi bi-clipboard2-pulse"></i>
         </div>
         <div>
-            <h3 style="margin:0;">Resume Analysis</h3>
-            <p style="margin:0;color:var(--muted);font-size:0.85rem;">
-                {{ session.user_name }} &nbsp;·&nbsp; Full report below
+            <h4 style="margin:0;font-family:'Syne',sans-serif;">Resume Analysis</h4>
+            <p style="margin:0;color:var(--muted);font-size:0.83rem;">
+                {{ session.user_name }}
+                {% if preferred_company %}
+                &nbsp;·&nbsp; Targeting <strong>{{ preferred_company }}</strong>
+                {% endif %}
             </p>
         </div>
         <a href="/reports/{{ pdf_report }}" class="btn btn-primary ms-auto" download>
@@ -21,186 +142,212 @@
         </a>
     </div>
 
-    <!-- TOP ROW: ATS + JD + CHART -->
-    <div class="row g-3 mb-3">
-
-        <!-- ATS SCORE -->
+    <!-- ROW 1: ATS + JD + CHART -->
+    <div class="row g-3 mb-2">
         <div class="col-md-4">
-            <div class="card p-4 h-100">
-                <div class="card-header-custom">
-                    <div class="card-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
+            <div class="section-card h-100">
+                <div class="section-head">
+                    <div class="section-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
-                    <h5 class="card-title-text">ATS Score</h5>
+                    <h5 class="section-title">ATS Score</h5>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <div class="score-circle"
-                         style="border-color:{% if ats_score >= 70 %}var(--success){% elif ats_score >= 40 %}var(--warning){% else %}var(--danger){% endif %};
-                                color:{% if ats_score >= 70 %}var(--success){% elif ats_score >= 40 %}var(--warning){% else %}var(--danger){% endif %};">
-                        {{ ats_score }}<small>/ 100</small>
+                    <div class="score-ring"
+                         style="border-color:{% if ats_score >= 70 %}#22c55e{% elif ats_score >= 40 %}#f59e0b{% else %}#ef4444{% endif %};
+                                color:{% if ats_score >= 70 %}#22c55e{% elif ats_score >= 40 %}#f59e0b{% else %}#ef4444{% endif %};">
+                        <span class="num">{{ ats_score }}</span>
+                        <span class="lbl">/ 100</span>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="progress mb-2">
+                        <div class="progress mb-2" style="height:8px;">
                             <div class="progress-bar {% if ats_score >= 70 %}bg-success{% elif ats_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}"
                                  style="width:{{ ats_score }}%"></div>
                         </div>
-                        <small style="color:var(--muted);">
-                            {% if ats_score >= 70 %}Strong resume — good ATS fit
-                            {% elif ats_score >= 40 %}Average — needs improvements
-                            {% else %}Weak — major gaps found{% endif %}
+                        <small style="color:var(--muted);font-size:0.8rem;">
+                            {% if ats_score >= 70 %}✅ Strong resume — good ATS fit
+                            {% elif ats_score >= 40 %}⚠️ Average — needs improvements
+                            {% else %}❌ Weak — major gaps found{% endif %}
                         </small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- JD MATCH -->
         <div class="col-md-4">
-            <div class="card p-4 h-100">
-                <div class="card-header-custom">
-                    <div class="card-icon" style="background:rgba(34,197,94,0.1);color:var(--success);">
+            <div class="section-card h-100">
+                <div class="section-head">
+                    <div class="section-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;">
                         <i class="bi bi-briefcase-fill"></i>
                     </div>
-                    <h5 class="card-title-text">JD Match</h5>
+                    <h5 class="section-title">JD Match</h5>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <div class="score-circle"
-                         style="border-color:{% if jd_match_score >= 60 %}var(--success){% elif jd_match_score >= 30 %}var(--warning){% else %}var(--muted){% endif %};
-                                color:{% if jd_match_score >= 60 %}var(--success){% elif jd_match_score >= 30 %}var(--warning){% else %}var(--muted){% endif %};">
-                        {{ jd_match_score }}<small>%</small>
+                    <div class="score-ring"
+                         style="border-color:{% if jd_match_score >= 60 %}#22c55e{% elif jd_match_score >= 30 %}#f59e0b{% else %}#9ca3af{% endif %};
+                                color:{% if jd_match_score >= 60 %}#22c55e{% elif jd_match_score >= 30 %}#f59e0b{% else %}#9ca3af{% endif %};">
+                        <span class="num">{{ jd_match_score }}</span>
+                        <span class="lbl">%</span>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="progress mb-2">
+                        <div class="progress mb-2" style="height:8px;">
                             <div class="progress-bar bg-success" style="width:{{ jd_match_score }}%"></div>
                         </div>
-                        <small style="color:var(--muted);">
+                        <small style="color:var(--muted);font-size:0.8rem;">
                             {% if jd_match_score == 0 %}No JD provided
-                            {% elif jd_match_score >= 60 %}Good match with job description
-                            {% else %}Low match — tailor your resume{% endif %}
+                            {% elif jd_match_score >= 60 %}✅ Good match
+                            {% else %}⚠️ Low match — tailor resume{% endif %}
                         </small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SKILLS CHART -->
         <div class="col-md-4">
-            <div class="card p-4 h-100">
-                <div class="card-header-custom">
-                    <div class="card-icon" style="background:rgba(6,182,212,0.1);color:var(--info);">
+            <div class="section-card h-100">
+                <div class="section-head">
+                    <div class="section-icon" style="background:rgba(6,182,212,0.1);color:#06b6d4;">
                         <i class="bi bi-pie-chart-fill"></i>
                     </div>
-                    <h5 class="card-title-text">Skill Overview</h5>
+                    <h5 class="section-title">Skill Overview</h5>
                 </div>
-                <canvas id="skillChart" height="130"></canvas>
+                <canvas id="skillChart" height="120"></canvas>
             </div>
         </div>
     </div>
 
     <!-- SKILLS -->
-    <div class="card p-4 mb-3">
-        <div class="card-header-custom">
-            <div class="card-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
+    <div class="section-card">
+        <div class="section-head">
+            <div class="section-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
                 <i class="bi bi-code-slash"></i>
             </div>
-            <h5 class="card-title-text">Detected Skills</h5>
-            <span class="badge bg-primary ms-auto rounded-pill">{{ skills|length }} found</span>
+            <h5 class="section-title">Detected Skills</h5>
+            <span class="badge bg-primary rounded-pill ms-auto"
+                  style="font-size:0.78rem;padding:5px 12px;">
+                {{ skills|length }} found
+            </span>
         </div>
         {% for skill in skills %}
-            <span class="skill-badge">{{ skill }}</span>
+            <span class="skill-chip"><i class="bi bi-check2"></i>{{ skill }}</span>
+        {% else %}
+            <span style="color:var(--muted);">No skills detected</span>
         {% endfor %}
     </div>
 
-    <!-- COMPANY MATCH + BAR CHART -->
-    <div class="card p-4 mb-3">
-        <div class="card-header-custom">
-            <div class="card-icon" style="background:rgba(34,197,94,0.1);color:var(--success);">
+    <!-- COMPANY MATCH -->
+    <div class="section-card">
+        <div class="section-head">
+            <div class="section-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;">
                 <i class="bi bi-building"></i>
             </div>
-            <h5 class="card-title-text">Company Match</h5>
+            <h5 class="section-title">Company Match</h5>
         </div>
         <div class="row g-3">
             <div class="col-md-6">
                 {% for company, data in company_scores.items() %}
-                <div class="mb-3">
+                <div class="company-row">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <div>
-                            <span style="font-weight:700;font-size:0.88rem;">{{ company }}</span>
-                            <br>
-                            <small style="color:var(--muted);">{{ data.role }} &nbsp;·&nbsp; {{ data.required_matched }}/{{ data.required_total }} required skills matched</small>
+                            <span style="font-weight:700;font-size:0.88rem;">{{ company }}</span><br>
+                            <small style="color:var(--muted);font-size:0.75rem;">
+                                {{ data.role }} &nbsp;·&nbsp;
+                                {{ data.required_matched }}/{{ data.required_total }} skills
+                            </small>
                         </div>
                         <span class="badge rounded-pill
                             {% if data.score >= 70 %}bg-success
                             {% elif data.score >= 40 %}bg-warning text-dark
-                            {% else %}bg-danger{% endif %}">
+                            {% else %}bg-danger{% endif %}"
+                            style="font-size:0.78rem;padding:5px 10px;">
                             {{ data.score }}%
                         </span>
                     </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-info" style="width:{{ data.score }}%;"></div>
+                    <div class="progress" style="height:6px;">
+                        <div class="progress-bar
+                            {% if data.score >= 70 %}bg-success
+                            {% elif data.score >= 40 %}bg-warning
+                            {% else %}bg-danger{% endif %}"
+                            style="width:{{ data.score }}%"></div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
             <div class="col-md-6">
-                <canvas id="companyChart" height="260"></canvas>
+                <canvas id="companyChart" height="280"></canvas>
             </div>
         </div>
     </div>
 
     <!-- STRENGTHS + WEAKNESSES -->
-    <div class="row g-3 mb-3">
+    <div class="row g-3 mb-2">
         <div class="col-md-6">
-            <div class="card p-4 h-100">
-                <div class="card-header-custom">
-                    <div class="card-icon" style="background:rgba(34,197,94,0.1);color:var(--success);">
+            <div class="section-card h-100" style="border-color:rgba(34,197,94,0.2);">
+                <div class="section-head">
+                    <div class="section-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;">
                         <i class="bi bi-hand-thumbs-up-fill"></i>
                     </div>
-                    <h5 class="card-title-text" style="color:var(--success);">Strengths</h5>
+                    <h5 class="section-title" style="color:#22c55e;">Strengths</h5>
                 </div>
-                <ul style="padding-left:18px;margin:0;">
-                    {% for item in strengths %}
-                        <li style="margin-bottom:8px;font-size:0.9rem;">{{ item }}</li>
-                    {% else %}
-                        <li style="color:var(--muted);">No strengths detected — add more content to your resume.</li>
-                    {% endfor %}
-                </ul>
+                {% for item in strengths %}
+                <div class="sw-item" style="background:rgba(34,197,94,0.06);">
+                    <i class="bi bi-check-circle-fill" style="color:#22c55e;"></i>{{ item }}
+                </div>
+                {% else %}
+                <div style="color:var(--muted);font-size:0.88rem;">
+                    Add more content to your resume.
+                </div>
+                {% endfor %}
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card p-4 h-100">
-                <div class="card-header-custom">
-                    <div class="card-icon" style="background:rgba(239,68,68,0.1);color:var(--danger);">
+            <div class="section-card h-100" style="border-color:rgba(239,68,68,0.2);">
+                <div class="section-head">
+                    <div class="section-icon" style="background:rgba(239,68,68,0.1);color:#ef4444;">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                     </div>
-                    <h5 class="card-title-text" style="color:var(--danger);">Weaknesses</h5>
+                    <h5 class="section-title" style="color:#ef4444;">Weaknesses</h5>
                 </div>
-                <ul style="padding-left:18px;margin:0;">
-                    {% for item in weaknesses %}
-                        <li style="margin-bottom:8px;font-size:0.9rem;">{{ item }}</li>
-                    {% else %}
-                        <li style="color:var(--muted);">No major weaknesses found. Great job!</li>
-                    {% endfor %}
-                </ul>
+                {% for item in weaknesses %}
+                <div class="sw-item" style="background:rgba(239,68,68,0.06);">
+                    <i class="bi bi-x-circle-fill" style="color:#ef4444;"></i>{{ item }}
+                </div>
+                {% else %}
+                <div class="sw-item" style="background:rgba(34,197,94,0.06);">
+                    <i class="bi bi-check-circle-fill" style="color:#22c55e;"></i>
+                    No major weaknesses found. Great job!
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 
     <!-- RECOMMENDATIONS -->
-    <div class="card p-4 mb-3">
-        <div class="card-header-custom">
-            <div class="card-icon" style="background:rgba(245,158,11,0.1);color:var(--warning);">
+    <div class="section-card">
+        <div class="section-head">
+            <div class="section-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b;">
                 <i class="bi bi-lightbulb-fill"></i>
             </div>
-            <h5 class="card-title-text">Recommendations</h5>
+            <h5 class="section-title">Recommendations</h5>
+            <span class="badge rounded-pill ms-auto"
+                  style="background:rgba(245,158,11,0.15);color:#f59e0b;font-size:0.78rem;padding:5px 12px;">
+                {{ recommendations|length }} suggestions
+            </span>
         </div>
         <div class="row g-2">
             {% for item in recommendations %}
             <div class="col-md-6">
-                <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;
-                            padding:12px 14px;font-size:0.88rem;display:flex;gap:10px;align-items:flex-start;">
-                    <i class="bi bi-arrow-right-circle-fill" style="color:var(--warning);margin-top:2px;flex-shrink:0;"></i>
+                <div class="rec-item">
+                    <i class="bi bi-arrow-right-circle-fill"
+                       style="color:#f59e0b;flex-shrink:0;margin-top:2px;"></i>
                     {{ item }}
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="rec-item">
+                    <i class="bi bi-check-circle-fill" style="color:#22c55e;"></i>
+                    Your resume looks good! No major recommendations.
                 </div>
             </div>
             {% endfor %}
@@ -208,29 +355,31 @@
     </div>
 
     <!-- INTERVIEW QUESTIONS -->
-    <div class="card p-4 mb-3">
-        <div class="card-header-custom">
-            <div class="card-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
+    <div class="section-card">
+        <div class="section-head">
+            <div class="section-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
                 <i class="bi bi-chat-dots-fill"></i>
             </div>
-            <h5 class="card-title-text">Interview Questions</h5>
+            <h5 class="section-title">Interview Questions</h5>
         </div>
         <div class="accordion" id="questionsAccordion">
             {% for skill, qs in questions.items() %}
-            <div class="accordion-item" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+            <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#q{{ loop.index }}"
-                            style="background:var(--surface);color:var(--text);border-radius:10px;font-weight:700;font-size:0.9rem;">
-                        <i class="bi bi-tag-fill me-2" style="color:var(--primary);"></i>{{ skill }}
-                        <span class="badge bg-primary rounded-pill ms-2">{{ qs|length }}</span>
+                            data-bs-toggle="collapse" data-bs-target="#q{{ loop.index }}">
+                        <i class="bi bi-tag-fill me-2" style="color:var(--primary);font-size:11px;"></i>
+                        {{ skill }}
+                        <span class="badge bg-primary rounded-pill ms-2" style="font-size:0.72rem;">
+                            {{ qs|length }}
+                        </span>
                     </button>
                 </h2>
                 <div id="q{{ loop.index }}" class="accordion-collapse collapse">
-                    <div class="accordion-body" style="padding-top:0;">
+                    <div class="accordion-body">
                         <ol style="padding-left:18px;margin:0;">
                             {% for q in qs %}
-                                <li style="margin-bottom:8px;font-size:0.88rem;">{{ q }}</li>
+                            <li style="margin-bottom:10px;font-size:0.87rem;line-height:1.5;">{{ q }}</li>
                             {% endfor %}
                         </ol>
                     </div>
@@ -240,15 +389,140 @@
         </div>
     </div>
 
-    <!-- EXTRACTED TEXT -->
-    <div class="card p-4">
-        <div class="card-header-custom">
-            <div class="card-icon" style="background:rgba(107,114,128,0.1);color:var(--muted);">
-                <i class="bi bi-file-text"></i>
+    <!-- RESUME PREVIEW — structured sections instead of raw text -->
+    <div class="section-card">
+        <div class="section-head">
+            <div class="section-icon" style="background:rgba(79,110,247,0.1);color:var(--primary);">
+                <i class="bi bi-person-vcard"></i>
             </div>
-            <h5 class="card-title-text">Extracted Resume Text</h5>
+            <h5 class="section-title">Resume Preview</h5>
         </div>
-        <pre>{{ resume_text }}</pre>
+
+        <div class="resume-preview">
+
+            <!-- NAME & CONTACT -->
+            {% if parsed.name %}
+            <div class="resume-name">{{ parsed.name }}</div>
+            {% endif %}
+
+            <div class="resume-contact">
+                {% if parsed.email %}
+                <a href="mailto:{{ parsed.email }}">
+                    <i class="bi bi-envelope-fill" style="color:var(--primary);"></i>
+                    {{ parsed.email }}
+                </a>
+                {% endif %}
+                {% if parsed.phone %}
+                <span>
+                    <i class="bi bi-telephone-fill" style="color:var(--primary);"></i>
+                    {{ parsed.phone }}
+                </span>
+                {% endif %}
+                {% if parsed.linkedin %}
+                <a href="https://{{ parsed.linkedin }}" target="_blank">
+                    <i class="bi bi-linkedin" style="color:#0077b5;"></i>
+                    {{ parsed.linkedin }}
+                </a>
+                {% endif %}
+                {% if parsed.github %}
+                <a href="https://{{ parsed.github }}" target="_blank">
+                    <i class="bi bi-github" style="color:var(--text);"></i>
+                    {{ parsed.github }}
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- OBJECTIVE -->
+            {% if parsed.objective %}
+            <div class="resume-section-title">
+                <i class="bi bi-bullseye me-2"></i>Objective
+            </div>
+            <div style="font-size:0.87rem;line-height:1.7;color:var(--muted);">
+                {{ parsed.objective }}
+            </div>
+            {% endif %}
+
+            <!-- EDUCATION -->
+            {% if parsed.education %}
+            <div class="resume-section-title">
+                <i class="bi bi-mortarboard-fill me-2"></i>Education
+            </div>
+            {% for item in parsed.education %}
+            <div class="resume-item">{{ item }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- SKILLS -->
+            {% if parsed.skills %}
+            <div class="resume-section-title">
+                <i class="bi bi-code-slash me-2"></i>Skills
+            </div>
+            {% for item in parsed.skills %}
+                <span class="resume-skill-tag">{{ item }}</span>
+            {% endfor %}
+            {% endif %}
+
+            <!-- PROJECTS -->
+            {% if parsed.projects %}
+            <div class="resume-section-title">
+                <i class="bi bi-folder-fill me-2"></i>Projects
+            </div>
+            {% for item in parsed.projects %}
+            <div class="resume-item">{{ item }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- EXPERIENCE -->
+            {% if parsed.experience %}
+            <div class="resume-section-title">
+                <i class="bi bi-briefcase-fill me-2"></i>Experience / Internship
+            </div>
+            {% for item in parsed.experience %}
+            <div class="resume-item">{{ item }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- CERTIFICATIONS -->
+            {% if parsed.certifications %}
+            <div class="resume-section-title">
+                <i class="bi bi-patch-check-fill me-2"></i>Certifications
+            </div>
+            {% for item in parsed.certifications %}
+            <div class="resume-item">{{ item }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- ACHIEVEMENTS -->
+            {% if parsed.achievements %}
+            <div class="resume-section-title">
+                <i class="bi bi-trophy-fill me-2"></i>Achievements
+            </div>
+            {% for item in parsed.achievements %}
+            <div class="resume-item">{{ item }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- AREAS OF INTEREST -->
+            {% if parsed.areas_of_interest %}
+            <div class="resume-section-title">
+                <i class="bi bi-stars me-2"></i>Areas of Interest
+            </div>
+            {% for item in parsed.areas_of_interest %}
+                <span class="resume-skill-tag">{{ item }}</span>
+            {% endfor %}
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- BOTTOM BUTTONS -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-primary me-2">
+            <i class="bi bi-upload me-2"></i>Analyze Another Resume
+        </a>
+        <a href="/reports/{{ pdf_report }}" class="btn btn-primary" download>
+            <i class="bi bi-download me-2"></i>Download PDF Report
+        </a>
     </div>
 
 </div>
@@ -256,47 +530,44 @@
 
 {% block scripts %}
 <script>
-// Skill Doughnut Chart
 const skillCtx = document.getElementById('skillChart').getContext('2d');
 new Chart(skillCtx, {
     type: 'doughnut',
     data: {
         labels: ['Skills Found', 'ATS Score', 'JD Match'],
         datasets: [{
-            data: [{{ skills|length * 5 }}, {{ ats_score }}, {{ jd_match_score }}],
+            data: [Math.min({{ skills|length }} * 5, 100), {{ ats_score }}, {{ jd_match_score }}],
             backgroundColor: ['#4f6ef7','#22c55e','#06b6d4'],
-            borderWidth: 0,
-            hoverOffset: 4
+            borderWidth: 0, hoverOffset: 4
         }]
     },
     options: {
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
-        cutout: '65%'
+        plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, color: '#6b7280' }}
+        },
+        cutout: '68%'
     }
 });
 
-// Company Bar Chart
 const companyCtx = document.getElementById('companyChart').getContext('2d');
-const companies = [{% for c, d in company_scores.items() %}"{{ c|replace('&','and')}}",{% endfor %}];
+const companies = [{% for c, d in company_scores.items() %}"{{ c | replace('&', 'and') }}",{% endfor %}];
 const scores    = [{% for c, d in company_scores.items() %}{{ d.score }},{% endfor %}];
 new Chart(companyCtx, {
     type: 'bar',
     data: {
         labels: companies,
         datasets: [{
-            label: 'Match %',
-            data: scores,
-            backgroundColor: scores.map(s => s >= 70 ? '#22c55e' : s >= 40 ? '#f59e0b' : '#ef4444'),
-            borderRadius: 6,
-            borderSkipped: false,
+            label: 'Match %', data: scores,
+            backgroundColor: scores.map(s => s >= 70 ? 'rgba(34,197,94,0.7)' : s >= 40 ? 'rgba(245,158,11,0.7)' : 'rgba(239,68,68,0.7)'),
+            borderRadius: 6, borderSkipped: false,
         }]
     },
     options: {
         indexAxis: 'y',
         plugins: { legend: { display: false } },
         scales: {
-            x: { max: 100, grid: { display: false }, ticks: { font: { size: 10 } } },
-            y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            x: { max: 100, grid: { color: 'rgba(107,114,128,0.1)' }, ticks: { font: { size: 10 }, color: '#6b7280' }},
+            y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#6b7280' }}
         }
     }
 });
