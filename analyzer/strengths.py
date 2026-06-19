@@ -1,61 +1,121 @@
 def analyze_resume(text, skills):
-    strengths  = []
+
+    strengths = []
     weaknesses = []
+
     text_lower = text.lower()
 
-    # --- Strengths ---
-    if len(skills) >= 8:
-        strengths.append("Strong technical skill set — covers multiple domains.")
-    elif len(skills) >= 5:
-        strengths.append("Good range of technical skills for a fresher profile.")
+    # Technical depth
+    if len(skills) >= 10:
+        strengths.append(
+            "Excellent technical profile with diverse technologies."
+        )
+    elif len(skills) >= 7:
+        strengths.append(
+            "Good technical skill coverage for fresher opportunities."
+        )
 
+    # Projects
+    project_count = text_lower.count("project")
+
+    if project_count >= 3:
+        strengths.append(
+            "Multiple projects demonstrate practical implementation ability."
+        )
+    elif project_count >= 1:
+        strengths.append(
+            "Project experience present."
+        )
+    else:
+        weaknesses.append(
+            "No projects found."
+        )
+
+    # Internship
     if "internship" in text_lower:
-        strengths.append("Has internship experience — a major plus for service-based shortlisting.")
+        strengths.append(
+            "Internship experience improves employability."
+        )
+    else:
+        weaknesses.append(
+            "No internship experience detected."
+        )
 
-    if "project" in text_lower:
-        strengths.append("Projects section present — shows practical application of skills.")
+    # GitHub
+    if "github" in text_lower:
+        strengths.append(
+            "GitHub profile available for recruiter verification."
+        )
+    else:
+        weaknesses.append(
+            "GitHub profile missing."
+        )
 
-    if "github" in text_lower or "github.com" in text_lower:
-        strengths.append("GitHub profile linked — demonstrates coding activity to recruiters.")
-
-    if "certification" in text_lower or "certified" in text_lower:
-        strengths.append("Certifications listed — valued by TCS, Infosys, Wipro hiring teams.")
-
+    # LinkedIn
     if "linkedin" in text_lower:
-        strengths.append("LinkedIn profile included — improves recruiter discoverability.")
+        strengths.append(
+            "LinkedIn profile present."
+        )
+    else:
+        weaknesses.append(
+            "LinkedIn profile missing."
+        )
 
-    if any(v in text_lower for v in ["developed", "built", "implemented", "deployed", "automated"]):
-        strengths.append("Uses strong action verbs — resume reads as achievement-oriented.")
+    # Certifications
+    cert_count = (
+        text_lower.count("certification")
+        + text_lower.count("certified")
+    )
 
-    if "cgpa" in text_lower or "percentage" in text_lower or "gpa" in text_lower:
-        strengths.append("Academic score mentioned — important for service company eligibility cutoffs.")
+    if cert_count >= 2:
+        strengths.append(
+            "Multiple certifications strengthen the profile."
+        )
+    elif cert_count == 0:
+        weaknesses.append(
+            "No certifications detected."
+        )
 
-    if "communication" in text_lower or "teamwork" in text_lower:
-        strengths.append("Soft skills highlighted — relevant for HR and managerial rounds.")
+    # Cloud skills
+    cloud = [
+        "aws",
+        "azure",
+        "gcp",
+        "docker"
+    ]
 
-    # --- Weaknesses ---
-    if "internship" not in text_lower:
-        weaknesses.append("No internship experience — consider virtual internships or training programs.")
+    if any(c in skills for c in cloud):
+        strengths.append(
+            "Cloud/DevOps skills detected."
+        )
+    else:
+        weaknesses.append(
+            "No cloud technologies detected."
+        )
 
-    if "github" not in text_lower:
-        weaknesses.append("GitHub profile missing — most service companies check this during tech screening.")
+    # Action verbs
+    verbs = [
+        "developed",
+        "built",
+        "implemented",
+        "designed",
+        "automated",
+        "optimized",
+        "deployed"
+    ]
 
-    if "summary" not in text_lower and "objective" not in text_lower:
-        weaknesses.append("No career objective or summary — add 2–3 lines at the top of the resume.")
+    count = sum(
+        1 for v in verbs
+        if v in text_lower
+    )
 
-    if "project" not in text_lower:
-        weaknesses.append("No projects found — projects are critical for freshers with no work experience.")
-
-    if "certification" not in text_lower and "certified" not in text_lower:
-        weaknesses.append("No certifications — free certs from AWS, Google, or Infosys Springboard add credibility.")
-
-    if len(skills) < 5:
-        weaknesses.append("Too few skills detected — expand the skills section with tools and technologies you know.")
-
-    if "cgpa" not in text_lower and "percentage" not in text_lower and "gpa" not in text_lower:
-        weaknesses.append("Academic score not mentioned — TCS, Wipro, and Infosys have minimum eligibility criteria.")
-
-    if "linkedin" not in text_lower:
-        weaknesses.append("LinkedIn URL missing — add it to improve recruiter reach.")
+    if count >= 3:
+        strengths.append(
+            "Strong action-oriented resume language."
+        )
+    else:
+        weaknesses.append(
+            "Use stronger action verbs in project descriptions."
+        )
 
     return strengths, weaknesses

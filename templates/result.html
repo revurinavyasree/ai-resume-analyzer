@@ -1,9 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Analysis Result — ResumeAI{% endblock %}
-
 {% block head %}
 <style>
     body { background: var(--bg) !important; }
+
+    h4, h5, h6 {
+    color: var(--text) !important;
+}
+    small {
+    color: var(--text) !important;
+}
 
     .skill-chip {
         display: inline-flex; align-items: center; gap: 5px;
@@ -16,6 +22,7 @@
     .section-card {
         background: var(--surface); border: 1px solid var(--border);
         border-radius: 16px; padding: 24px; margin-bottom: 16px;
+        color: var(--text);
     }
     .section-head {
         display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
@@ -28,6 +35,7 @@
     .section-title {
         font-family: 'Syne', sans-serif;
         font-weight: 700; font-size: 0.95rem; margin: 0;
+        color: var(--text) !important;
     }
     .score-ring {
         width: 84px; height: 84px; border-radius: 50%; border: 5px solid;
@@ -37,8 +45,11 @@
     .score-ring .num {
         font-family: 'Syne', sans-serif;
         font-weight: 800; font-size: 1.4rem; line-height: 1;
+        color: var(--text) !important;
     }
-    .score-ring .lbl { font-size: 0.58rem; font-weight: 500; opacity: 0.7; margin-top: 1px; }
+    .score-ring .lbl { font-size: 0.58rem; font-weight: 500; opacity: 0.7; margin-top: 1px;
+    color: var(--text) !important;
+ }
     .sw-item {
         display: flex; align-items: flex-start; gap: 10px;
         padding: 10px 14px; border-radius: 10px;
@@ -50,7 +61,7 @@
         background: var(--bg); border: 1px solid var(--border);
         margin-bottom: 8px; font-size: 0.87rem; line-height: 1.5;
     }
-    .company-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .company-row { padding: 12px 0; border-bottom: 1px solid var(--border);color: var(--text); }
     .company-row:last-child { border-bottom: none; }
     .accordion-button {
         background: var(--surface) !important; color: var(--text) !important;
@@ -65,15 +76,17 @@
 
     /* Resume preview */
     .resume-preview {
-        background: var(--bg);
+        background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 14px;
         padding: 24px;
+        color: var(--text);
     }
     .resume-name {
         font-family: 'Syne', sans-serif;
         font-size: 1.4rem; font-weight: 800;
         margin-bottom: 6px;
+        color: var(--text)
     }
     .resume-contact {
         display: flex; flex-wrap: wrap; gap: 12px;
@@ -81,7 +94,7 @@
     }
     .resume-contact a, .resume-contact span {
         display: inline-flex; align-items: center; gap: 5px;
-        font-size: 0.82rem; color: var(--muted);
+        font-size: 0.82rem; color: var(--text);
         text-decoration: none;
     }
     .resume-contact a:hover { color: var(--primary); }
@@ -114,6 +127,16 @@
         color: var(--primary);
         border: 1px solid rgba(79,110,247,0.15);
     }
+    .card,
+    .card-body,
+    p,
+    span,
+    div,
+    li,
+    td,
+    th {
+    color: var(--text);
+    }
 </style>
 {% endblock %}
 
@@ -128,7 +151,7 @@
                     font-size:22px;flex-shrink:0;">
             <i class="bi bi-clipboard2-pulse"></i>
         </div>
-        <div>
+        <div> 
             <h4 style="margin:0;font-family:'Syne',sans-serif;">Resume Analysis</h4>
             <p style="margin:0;color:var(--muted);font-size:0.83rem;">
                 {{ session.user_name }}
@@ -216,6 +239,30 @@
         </div>
     </div>
 
+
+
+    <div class="section-card">
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(34,197,94,0.1);color:#22c55e;">
+            <i class="bi bi-list-check"></i>
+        </div>
+        <h5 class="section-title">Resume Completeness</h5>
+    </div>
+
+    {% for section, status in section_status.items() %}
+    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span>{{ section }}</span>
+
+        {% if status %}
+            <span class="badge bg-success">✓ Present</span>
+        {% else %}
+            <span class="badge bg-danger">✗ Missing</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
     <!-- SKILLS -->
     <div class="section-card">
         <div class="section-head">
@@ -234,6 +281,81 @@
             <span style="color:var(--muted);">No skills detected</span>
         {% endfor %}
     </div>
+    <!-- AI Resume Summary -->
+<div class="section-card">
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(79,110,247,0.1);color:#4f6ef7;">
+            <i class="bi bi-robot"></i>
+        </div>
+        <h5 class="section-title">AI Resume Summary</h5>
+    </div>
+
+    <p>{{ ai_summary }}</p>
+</div>
+
+
+<!-- Predicted Role -->
+<div class="section-card">
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(34,197,94,0.1);color:#22c55e;">
+            <i class="bi bi-bullseye"></i>
+        </div>
+        <h5 class="section-title">Predicted Job Role</h5>
+    </div>
+
+    <h4 style="font-family:'Syne',sans-serif;
+           font-weight:700;
+           color:var(--primary);
+           margin:0;">
+    {{ predicted_role }}
+</h4>
+</div>
+
+<!-- Skill Gap Analysis -->
+<div class="section-card">
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(245,158,11,0.1);color:#f59e0b;">
+            <i class="bi bi-bar-chart"></i>
+        </div>
+        <h5 class="section-title">Skills To Learn Next</h5>
+    </div>
+
+    {% if skill_gap %}
+        {% for skill in skill_gap %}
+            <span class="skill-chip">{{ skill }}</span>
+        {% endfor %}
+    {% else %}
+        <span style="color:var(--muted);">
+            No skill gaps identified.
+        </span>
+    {% endif %}
+</div>
+
+<!-- Career Recommendations -->
+<div class="section-card">
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(168,85,247,0.1);color:#a855f7;">
+            <i class="bi bi-rocket-takeoff"></i>
+        </div>
+        <h5 class="section-title">Career Recommendations</h5>
+    </div>
+
+    {% if career_recommendations %}
+        {% for career in career_recommendations %}
+            <div class="rec-item">
+                {{ career }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <span style="color:var(--muted);">
+            No career recommendations available.
+        </span>
+    {% endif %}
+</div>
 
     <!-- COMPANY MATCH -->
     <div class="section-card">
@@ -278,6 +400,37 @@
             </div>
         </div>
     </div>
+    <!-- project_questions -->
+
+    <div class="section-card">
+
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(79,110,247,0.1);color:#4f6ef7;">
+            <i class="bi bi-patch-question-fill"></i>
+        </div>
+
+        <h5 class="section-title">
+            Project-Based Interview Questions
+        </h5>
+    </div>
+{% if project_questions %}
+    {% for question in project_questions %}
+        <div class="sw-item">
+            <i class="bi bi-question-circle"></i>
+            {{ question }}
+        </div>
+    {% endfor %}
+
+{% else %}
+
+    <div style="color:var(--muted)">
+        No project-based questions generated.
+    </div>
+
+{% endif %}
+
+</div>
 
     <!-- STRENGTHS + WEAKNESSES -->
     <div class="row g-3 mb-2">
@@ -461,6 +614,49 @@
                 <span class="resume-skill-tag">{{ item }}</span>
             {% endfor %}
             {% endif %}
+
+            <div class="section-card">
+    <div class="section-head">
+        <div class="section-icon"
+             style="background:rgba(239,68,68,0.1);color:#ef4444;">
+            <i class="bi bi-search"></i>
+        </div>
+
+        <h5 class="section-title">Skill Gap Analysis</h5>
+    </div>
+
+    {% if jd_skills %}
+
+        <h6 class="mb-2">Required Skills</h6>
+
+        {% for skill in jd_skills %}
+            <span class="skill-chip">{{ skill }}</span>
+        {% endfor %}
+
+        <hr>
+
+        <h6 class="mb-2 text-danger">Missing Skills</h6>
+
+        {% if missing_skills %}
+            {% for skill in missing_skills %}
+                <span class="badge bg-danger me-1 mb-1">
+                    {{ skill }}
+                </span>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-success mb-0">
+                ✅ Great! No missing skills detected.
+            </div>
+        {% endif %}
+
+    {% else %}
+
+        <div class="alert alert-info mb-0">
+            Upload a Job Description to view Skill Gap Analysis.
+        </div>
+
+    {% endif %}
+</div>
 
             <!-- PROJECTS -->
             {% if parsed.projects %}

@@ -13,11 +13,18 @@ from analyzer.questions import generate_questions
 from analyzer.strengths import analyze_resume
 from analyzer.jd_matcher import calculate_jd_match
 from analyzer.report_generator import generate_pdf_report
+from analyzer.projects_questions import generate_project_questions
+from analyzer.role_predictor import predict_role
+from analyzer.ai_recommender import (
+    generate_ai_summary,
+    recommend_careers,
+    skill_gap_analysis
+)
 
 from database.db import register_user, login_user, save_resume, get_user_resumes
 
 app = Flask(__name__)
-app.secret_key = "resumeanalyzer_secret_2024"
+app.secret_key = os.environ.get("SECRET_KEY", "resumeanalyzer_secret_2024")
 
 UPLOAD_FOLDER  = "uploads"
 REPORTS_FOLDER = "reports"
@@ -45,8 +52,10 @@ def is_valid_email(email):
         return False
     parts = email.split('@')
     domain = parts[1].split('.')
-    if len(parts[0]) < 2: return False
-    if len(domain[0]) < 2: return False
+    if len(parts[0]) < 2:
+        return False
+    if len(domain[0]) < 2:
+        return False
     return True
 
 
@@ -88,16 +97,16 @@ def parse_resume_sections(text):
 
     # Extract contact info from first 15 lines
     for line in lines[:15]:
-        if not result["email"]    and email_re.search(line):
-            result["email"]    = email_re.search(line).group()
-        if not result["phone"]    and phone_re.search(line):
-            result["phone"]    = phone_re.search(line).group()
+        if not result["email"] and email_re.search(line):
+            result["email"] = email_re.search(line).group()
+        if not result["phone"] and phone_re.search(line):
+            result["phone"] = phone_re.search(line).group()
         if not result["linkedin"] and linkedin_re.search(line):
             result["linkedin"] = linkedin_re.search(line).group()
-        if not result["github"]   and github_re.search(line):
-            result["github"]   = github_re.search(line).group()
+        if not result["github"] and github_re.search(line):
+            result["github"] = github_re.search(line).group()
 
-    # First clean line is the name
+    # First clean short line = name
     for line in lines[:5]:
         if (not email_re.search(line) and
             not phone_re.search(line) and
@@ -109,33 +118,63 @@ def parse_resume_sections(text):
 
     # Section keywords
     SECTIONS = {
-        "objective":         ["objective", "summary", "about me"],
-        "education":         ["education", "academic", "qualification"],
-        "skills":            ["skill", "technical skill", "technologies"],
-        "projects":          ["project", "personal project"],
-        "experience":        ["experience", "internship", "work experience"],
-        "certifications":    ["certification", "certificate", "course"],
-        "achievements":      ["achievement", "award", "activity", "accomplishment"],
-        "areas_of_interest": ["area of interest", "interest", "hobbies"],
+        "objective": [
+            "objective", "career objective", "professional summary",
+            "summary", "profile", "about me"
+        ],
+        "education": [
+            "education", "academic", "qualification", "academic background"
+        ],
+        "skills": [
+            "skills", "technical skills", "core skills",
+            "professional skills", "technologies", "tech stack"
+        ],
+        "projects": [
+            "projects", "project", "academic projects",
+            "personal projects", "personal project", "key projects"
+        ],
+        "experience": [
+            "experience", "internship", "work experience",
+            "professional experience", "work history"
+        ],
+        "certifications": [
+            "certifications", "certification", "certificates",
+            "certificate", "courses", "course", "training"
+        ],
+        "achievements": [
+            "achievements", "achievement", "awards", "award",
+            "accomplishments", "accomplishment", "activities", "honors"
+        ],
+        "areas_of_interest": [
+            "areas of interest", "area of interest",
+            "interests", "interest", "hobbies"
+        ],
     }
 
     def detect_section(line):
-        ll = line.lower().strip()
+        ll = line.lower().strip().rstrip(":").strip()
         for sec, kws in SECTIONS.items():
             for kw in kws:
-                if kw in ll and len(ll) < 40:
+                pattern = r'\b' + re.escape(kw) + r'\b'
+                if re.search(pattern, ll):
                     return sec
         return None
+
+    # Values to skip when appending lines to sections
+    contact_values = {
+        result["name"], result["email"],
+        result["phone"], result["linkedin"], result["github"]
+    }
 
     current = None
     for line in lines:
         sec = detect_section(line)
+
         if sec:
             current = sec
             continue
-        if current and line not in [result["name"],
-                                     result["email"],
-                                     result["phone"]]:
+
+        if current and line not in contact_values:
             result[current].append(line)
 
     result["objective"] = " ".join(result["objective"][:5])
@@ -233,10 +272,13 @@ def upload_resume():
     if "resume" not in request.files:
         flash("No file uploaded.", "danger")
         return redirect(url_for("index"))
+
     file = request.files["resume"]
+
     if file.filename == "":
         flash("No file selected.", "danger")
         return redirect(url_for("index"))
+
     if not allowed_file(file.filename):
         flash("Only PDF and DOCX files allowed.", "danger")
         return redirect(url_for("index"))
@@ -251,7 +293,6 @@ def upload_resume():
         flash(f"Error reading file: {e}", "danger")
         return redirect(url_for("index"))
 
-    # Validate it's actually a resume
     if not is_valid_resume(resume_text):
         flash("The uploaded file does not appear to be a resume. Please upload a valid resume.", "danger")
         return redirect(url_for("index"))
@@ -259,32 +300,88 @@ def upload_resume():
     job_description   = request.form.get("job_description", "")
     preferred_company = request.form.get("preferred_company", "")
 
-    skills                = detect_skills(resume_text)
-    ats_score             = calculate_ats_score(resume_text, skills)
-    jd_match_score        = calculate_jd_match(resume_text, job_description) if job_description else 0
-    questions             = generate_questions(skills, company=preferred_company or None)
-    strengths, weaknesses = analyze_resume(resume_text, skills)
-    company_scores        = company_match(skills)
-    recommendations       = generate_recommendations(resume_text, skills)
-    pdf_report            = generate_pdf_report(filename, ats_score, skills, recommendations)
-    parsed                = parse_resume_sections(resume_text)
+    # ── Core analysis ─────────────────────────────────────────────────────────
+    detected_skills  = detect_skills(resume_text)
+    ats_score        = calculate_ats_score(resume_text, detected_skills)
+    jd_match_score   = calculate_jd_match(resume_text, job_description) if job_description else 0
 
-    save_resume(session["user_id"], filename, ats_score, skills)
+    if job_description:
+        jd_skills     = detect_skills(job_description)
+        missing_skills = [
+            s for s in jd_skills
+            if s.lower() not in [x.lower() for x in detected_skills]
+        ]
+    else:
+        jd_skills      = []
+        missing_skills = []
+
+    questions              = generate_questions(detected_skills, company=preferred_company or None)
+    strengths, weaknesses  = analyze_resume(resume_text, detected_skills)
+    company_scores         = company_match(detected_skills)
+    recommendations        = generate_recommendations(resume_text, detected_skills)
+    ai_summary             = generate_ai_summary(detected_skills, ats_score)
+    career_recommendations = recommend_careers(detected_skills)
+    skill_gap              = skill_gap_analysis(detected_skills)
+    predicted_role         = predict_role(detected_skills)
+
+    try:
+        pdf_report_path = generate_pdf_report(
+            filename,
+            ats_score,
+            detected_skills,
+            missing_skills,
+            recommendations,
+            strengths,
+            weaknesses,
+            company_scores,
+            jd_match_score,
+            questions
+        )
+        pdf_report_path = os.path.basename(pdf_report_path)
+    except Exception as e:
+        pdf_report_path = None
+        print(f"PDF generation failed: {e}")
+
+    # ── Resume section parsing ─────────────────────────────────────────────────
+    parsed = parse_resume_sections(resume_text)
+
+    project_questions = generate_project_questions(parsed["projects"])
+
+    section_status = {
+        "Contact Info":      bool(parsed["email"] or parsed["phone"]),
+        "Education":         bool(parsed["education"]),
+        "Skills":            len(detected_skills) > 0,
+        "Projects":          bool(parsed["projects"]),
+        "Experience":        bool(parsed["experience"]),
+        "Certifications":    bool(parsed["certifications"]),
+        "Achievements":      bool(parsed["achievements"]),
+        "Areas of Interest": bool(parsed["areas_of_interest"]),
+    }
+
+    save_resume(session["user_id"], filename, ats_score, detected_skills)
 
     return render_template(
         "result.html",
-        resume_text       = resume_text,
-        skills            = skills,
-        ats_score         = ats_score,
-        jd_match_score    = jd_match_score,
-        company_scores    = company_scores,
-        recommendations   = recommendations,
-        pdf_report        = filename,
-        questions         = questions,
-        strengths         = strengths,
-        weaknesses        = weaknesses,
-        preferred_company = preferred_company,
-        parsed            = parsed,
+        resume_text=resume_text,
+        skills=detected_skills,
+        ats_score=ats_score,
+        jd_match_score=jd_match_score,
+        company_scores=company_scores,
+        recommendations=recommendations,
+        pdf_report=pdf_report_path,
+        ai_summary=ai_summary,
+        predicted_role=predicted_role,
+        skill_gap=skill_gap,
+        career_recommendations=career_recommendations,
+        questions=questions,
+        project_questions=project_questions,
+        strengths=strengths,
+        weaknesses=weaknesses,
+        preferred_company=preferred_company,
+        parsed=parsed,
+        section_status=section_status,
+        jd_skills=jd_skills,
+        missing_skills=missing_skills,
     )
 
 
