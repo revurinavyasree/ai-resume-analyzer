@@ -1,7 +1,11 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 from werkzeug.utils import secure_filename
 from functools import wraps
-import os
 import re
 
 from analyzer.extractor import extract_text
@@ -20,6 +24,7 @@ from analyzer.ai_recommender import (
     recommend_careers,
     skill_gap_analysis
 )
+from analyzer.ai_feedback import generate_ai_feedback
 
 from database.db import register_user, login_user, save_resume, get_user_resumes
 
@@ -315,14 +320,28 @@ def upload_resume():
         jd_skills      = []
         missing_skills = []
 
-    questions              = generate_questions(detected_skills, company=preferred_company or None)
-    strengths, weaknesses  = analyze_resume(resume_text, detected_skills)
-    company_scores         = company_match(detected_skills)
-    recommendations        = generate_recommendations(resume_text, detected_skills)
-    ai_summary             = generate_ai_summary(detected_skills, ats_score)
-    career_recommendations = recommend_careers(detected_skills)
-    skill_gap              = skill_gap_analysis(detected_skills)
-    predicted_role         = predict_role(detected_skills)
+    # ── Resume section parsing ─────────────────────────────────────────────────
+    # Moved up so project_questions exists in time to be passed into the PDF report below.
+    parsed = parse_resume_sections(resume_text)
+
+    # ── AI-powered analysis ───────────────────────────────────────────────────
+    # These run only after we know the file is a valid resume, so we never
+    # waste an API call analyzing junk text.
+    questions               = generate_questions(detected_skills, company=preferred_company or None)
+    strengths, weaknesses    = analyze_resume(resume_text, detected_skills)
+    company_scores           = company_match(detected_skills)
+    recommendations          = generate_recommendations(resume_text, detected_skills)
+    ai_summary               = generate_ai_summary(detected_skills, ats_score, resume_text)
+    career_recommendations   = recommend_careers(detected_skills, resume_text)
+    skill_gap                = skill_gap_analysis(detected_skills, resume_text)
+    predicted_role           = predict_role(detected_skills)
+    project_questions        = generate_project_questions(parsed["projects"])
+
+    try:
+        ai_feedback = generate_ai_feedback(resume_text)
+    except Exception as e:
+        ai_feedback = "AI feedback is temporarily unavailable. Please try again in a moment."
+        print(f"AI feedback generation failed: {e}")
 
     try:
         pdf_report_path = generate_pdf_report(
@@ -335,17 +354,13 @@ def upload_resume():
             weaknesses,
             company_scores,
             jd_match_score,
-            questions
+            questions,
+            project_questions
         )
         pdf_report_path = os.path.basename(pdf_report_path)
     except Exception as e:
         pdf_report_path = None
         print(f"PDF generation failed: {e}")
-
-    # ── Resume section parsing ─────────────────────────────────────────────────
-    parsed = parse_resume_sections(resume_text)
-
-    project_questions = generate_project_questions(parsed["projects"])
 
     section_status = {
         "Contact Info":      bool(parsed["email"] or parsed["phone"]),
@@ -368,6 +383,7 @@ def upload_resume():
         jd_match_score=jd_match_score,
         company_scores=company_scores,
         recommendations=recommendations,
+        ai_feedback=ai_feedback,
         pdf_report=pdf_report_path,
         ai_summary=ai_summary,
         predicted_role=predicted_role,

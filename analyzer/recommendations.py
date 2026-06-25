@@ -1,86 +1,38 @@
-CORE_SKILLS = ["python", "java", "sql", "git", "dsa", "oops"]
-CLOUD_SKILLS = ["aws", "azure", "gcp", "docker"]
-DATA_SKILLS  = ["machine learning", "data analysis", "power bi", "tableau"]
-WEB_SKILLS   = ["html", "css", "javascript", "react"]
+from analyzer.gemini_helper import ask_gemini_json
+
+fallback_recommendations = [
+    "Add measurable results to your project bullet points (example: improved speed by 20%).",
+    "Add a short professional summary near the top of your resume.",
+    "Add your GitHub and LinkedIn links near your contact details.",
+    "Use strong action words like built, designed, optimized instead of plain wording.",
+    "Keep your resume to one page if you are a student or fresher.",
+]
 
 
-def generate_recommendations(text, skills):
-    recommendations = []
-    text_lower = text.lower()
-    skills_lower = [s.lower() for s in skills]
+def generate_recommendations(resume_text, detected_skills):
+    if detected_skills:
+        skills_text = ", ".join(detected_skills)
+    else:
+        skills_text = "no specific skills detected"
 
-    # --- Profile completeness ---
-    if "github" not in text_lower:
-        recommendations.append(
-            "Add your GitHub profile link — all service-based companies check it during shortlisting."
-        )
-    if "linkedin" not in text_lower:
-        recommendations.append(
-            "Add your LinkedIn profile URL — recruiters at TCS, Infosys, and Accenture actively use it."
-        )
-    if "summary" not in text_lower and "objective" not in text_lower:
-        recommendations.append(
-            "Add a 2–3 line career objective at the top tailored to IT service roles."
-        )
+    # Only send first 3000 characters so the prompt does not get too long
+    if resume_text:
+        trimmed_text = resume_text[:3000]
+    else:
+        trimmed_text = ""
 
-    # --- Experience & projects ---
-    if "internship" not in text_lower:
-        recommendations.append(
-            "No internship found — add any internship or training (even virtual ones from NPTEL, Infosys Springboard, or TCS iON)."
-        )
-    if "project" not in text_lower:
-        recommendations.append(
-            "Add at least 2 projects with tech stack, your role, and a GitHub link."
-        )
-    elif text_lower.count("project") < 2:
-        recommendations.append(
-            "Try to include at least 2 projects — one individual and one team-based."
-        )
+    prompt = f"""Here is my resume text:
+{trimmed_text}
 
-    # --- Certifications ---
-    if "certification" not in text_lower and "certified" not in text_lower:
-        recommendations.append(
-            "Add certifications — AWS Cloud Practitioner, Google IT Support, or Infosys Springboard courses are highly valued by service companies."
-        )
+My detected skills: {skills_text}
 
-    # --- Core skill gaps ---
-    missing_core = [s for s in CORE_SKILLS if s not in skills_lower]
-    if missing_core:
-        recommendations.append(
-            f"Strengthen these core skills that service companies test: {', '.join(missing_core)}."
-        )
+Give me 5 specific tips to improve this resume for both ATS systems and recruiters.
+Reply only in JSON like this, nothing else:
+{{"recommendations": ["tip 1", "tip 2", "tip 3", "tip 4", "tip 5"]}}"""
 
-    # --- Cloud skills ---
-    if not any(s in skills_lower for s in CLOUD_SKILLS):
-        recommendations.append(
-            "Add at least one cloud skill (AWS, Azure, or GCP) — all major IT companies are cloud-first now."
-        )
+    result = ask_gemini_json(prompt)
 
-    # --- Skill count ---
-    if len(skills) < 6:
-        recommendations.append(
-            "Your resume shows fewer than 6 skills — expand your skills section with languages, tools, and frameworks you know."
-        )
+    if result and "recommendations" in result:
+        return result["recommendations"]
 
-    # --- Action verbs ---
-    verbs = ["developed", "built", "designed", "implemented", "automated",
-             "optimized", "deployed", "created", "managed", "tested"]
-    used_verbs = [v for v in verbs if v in text_lower]
-    if len(used_verbs) < 3:
-        recommendations.append(
-            "Use strong action verbs in your project descriptions: 'Developed', 'Built', 'Automated', 'Deployed', etc."
-        )
-
-    # --- Education section ---
-    if "cgpa" not in text_lower and "gpa" not in text_lower and "percentage" not in text_lower:
-        recommendations.append(
-            "Mention your CGPA or percentage — TCS, Infosys, and Wipro have minimum cutoffs (usually 60% or 6.0 CGPA)."
-        )
-
-    # --- Soft skills ---
-    if "communication" not in text_lower and "teamwork" not in text_lower:
-        recommendations.append(
-            "Mention soft skills like communication and teamwork — service companies heavily evaluate these in HR rounds."
-        )
-
-    return recommendations
+    return fallback_recommendations

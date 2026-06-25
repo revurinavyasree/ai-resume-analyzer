@@ -1,24 +1,48 @@
-import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+from google import genai
 
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+load_dotenv()
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Get the API key from .env file
+api_key = os.getenv("GEMINI_API_KEY")
+
+# Create the client only if we have a key, so the app does not crash on startup
+if api_key:
+    client = genai.Client(api_key=api_key)
+else:
+    client = None
+
 
 def generate_ai_feedback(resume_text):
+    if client is None:
+        return "AI feedback is unavailable right now (no API key configured)."
 
     prompt = f"""
-    Analyze this resume.
+Look at this resume and give SHORT, SIMPLE feedback. A student should be able
+to read the whole thing in under one minute.
 
-    Give:
-    1. Strengths
-    2. Weaknesses
-    3. Missing Skills
-    4. ATS Improvements
+Give exactly:
+1. Strengths - 3 short points
+2. Weaknesses - 3 short points
+3. Missing Skills - 3 short points
+4. ATS Improvements - 3 short points
 
-    Resume:
-    {resume_text}
-    """
+Rules:
+- Each point must be ONE short sentence.
+- Use simple, everyday words. No long or complex sentences.
+- Plain text only. Do not use markdown symbols like ** or #.
 
-    response = model.generate_content(prompt)
+Resume:
+{resume_text}
+"""
 
-    return response.text
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        return response.text
+    except Exception as e:
+        print("Gemini error:", e)
+        return "AI feedback is temporarily unavailable. Please try again in a moment."

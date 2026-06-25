@@ -1,78 +1,95 @@
-def generate_ai_summary(skills, ats_score):
+from analyzer.gemini_helper import ask_gemini, ask_gemini_json
 
-    top_skills = ", ".join(skills[:6])
 
-    if ats_score >= 80:
-        return (
-            f"This resume demonstrates a strong technical foundation "
-            f"with expertise in {top_skills}. "
-            f"The candidate appears suitable for software development, "
-            f"backend engineering and AI-related fresher opportunities."
-        )
+def generate_ai_summary(detected_skills, ats_score, resume_text):
+    if detected_skills:
+        skills_text = ", ".join(detected_skills)
+    else:
+        skills_text = "no specific skills"
 
-    elif ats_score >= 60:
-        return (
-            f"The resume showcases skills in {top_skills}. "
-            f"The candidate has good placement potential but can improve "
-            f"by adding advanced projects and industry-relevant technologies."
-        )
+    # Trim so the prompt does not get too long
+    trimmed_text = (resume_text or "")[:3000]
 
+    prompt = f"""Here is my resume text:
+{trimmed_text}
+
+My detected skills: {skills_text}
+My ATS score: {ats_score}/100
+
+Write a short 2-3 sentence summary about my profile, based on what is actually
+in my resume (my projects, education, and skills), and one tip to improve my resume.
+Plain text only, no markdown."""
+
+    result = ask_gemini(prompt)
+
+    if result:
+        return result.strip()
+
+    # If Gemini did not work, use a simple fallback message
     return (
-        f"The resume includes skills such as {top_skills}. "
-        f"Additional projects, certifications and technical depth "
-        f"would improve hiring potential."
+        f"You have {len(detected_skills)} skills detected and an ATS score of "
+        f"{ats_score}/100. Try adding more achievements with numbers to improve your resume."
     )
 
 
-def recommend_careers(skills):
+def recommend_careers(detected_skills, resume_text):
+    if detected_skills:
+        skills_text = ", ".join(detected_skills)
+    else:
+        skills_text = "general technical skills"
 
-    skills = [s.lower().strip() for s in skills]
+    trimmed_text = (resume_text or "")[:3000]
 
-    careers = []
+    prompt = f"""Here is my resume text:
+{trimmed_text}
 
-    if "python" in skills:
-        careers.append("Python Developer")
+My detected skills: {skills_text}
 
-    if "machine learning" in skills:
-        careers.append("AI/ML Engineer")
+Based on my actual projects, education, and skills above (not just the skill list),
+suggest 3 job roles suitable for me.
+Reply only in JSON like this, nothing else:
+{{"careers": [{{"role": "Role Name", "reason": "short reason based on my actual resume"}}]}}"""
 
-    if "sql" in skills or "mysql" in skills:
-        careers.append("Data Analyst")
+    result = ask_gemini_json(prompt)
 
-    if "flask" in skills:
-        careers.append("Backend Developer")
+    if result and "careers" in result:
+        return result["careers"]
 
-    if "html" in skills and "css" in skills:
-        careers.append("Frontend Developer")
-
-    if "javascript" in skills:
-        careers.append("Full Stack Developer")
-
-    return list(set(careers))
+    # Fallback list if Gemini did not work
+    return [
+        {"role": "Software Developer", "reason": "Matches your technical skills"},
+        {"role": "QA Engineer", "reason": "Good fit for detail oriented work"},
+        {"role": "Technical Analyst", "reason": "Suits an analytical background"},
+    ]
 
 
-def skill_gap_analysis(skills):
+def skill_gap_analysis(detected_skills, resume_text):
+    if detected_skills:
+        skills_text = ", ".join(detected_skills)
+    else:
+        skills_text = "no specific skills"
 
-    skills = [s.lower().strip() for s in skills]
+    trimmed_text = (resume_text or "")[:3000]
 
-    suggestions = []
+    prompt = f"""Here is my resume text:
+{trimmed_text}
 
-    if "aws" not in skills:
-        suggestions.append("AWS Cloud")
+My detected skills: {skills_text}
 
-    if "docker" not in skills:
-        suggestions.append("Docker")
+Based on my actual projects and the kind of roles they point toward (not just the
+skill list), suggest 4 additional skills I should learn to get a better job.
+Reply only in JSON like this, nothing else:
+{{"gaps": [{{"skill": "Skill Name", "reason": "short reason based on my actual resume"}}]}}"""
 
-    if "rest api" not in skills:
-        suggestions.append("REST APIs")
+    result = ask_gemini_json(prompt)
 
-    if "mongodb" not in skills:
-        suggestions.append("MongoDB")
+    if result and "gaps" in result:
+        return result["gaps"]
 
-    if "react" not in skills:
-        suggestions.append("React")
-
-    if "linux" not in skills:
-        suggestions.append("Linux")
-
-    return suggestions
+    # Fallback list if Gemini did not work
+    return [
+        {"skill": "Git/GitHub", "reason": "Used in almost every coding job"},
+        {"skill": "Cloud basics (AWS/GCP)", "reason": "Most companies use cloud now"},
+        {"skill": "REST API", "reason": "Needed for backend and full stack roles"},
+        {"skill": "Unit Testing", "reason": "Expected in good quality code"},
+    ]
