@@ -24,14 +24,13 @@ Here are project descriptions from my resume:
 Generate 5  technical interview questions.
 
 Focus on:
-- architecture
-- implementation
-- challenges faced
-- scalability
-- design decisions
+- what the project does and why
+- the tools/technologies used and why you picked them
+- challenges you faced while building it
+
 
 Rules:
-- Questions must be suitable for a final year student.
+- Questions must be suitable for a fresher.
 - Ask basic and intermediate questions only.
 - Avoid software architecture and system design questions.
 - Use simple language.

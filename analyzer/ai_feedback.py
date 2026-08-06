@@ -26,7 +26,7 @@ Give exactly:
 1. Strengths - 3 short points
 2. Weaknesses - 3 short points
 3. Missing Skills - 3 short points
-4. ATS Improvements - 3 short points
+4. ATS Improvements - 3 short points specifically for ATS score improvement
 
 Rules:
 - Each point must be ONE short sentence.
@@ -34,7 +34,7 @@ Rules:
 - Plain text only. Do not use markdown symbols like ** or #.
 
 Resume:
-{resume_text}
+{resume_text[:6000]}  # Limit to first 6000 characters to avoid hitting token limits
 """
 
     try:
